@@ -1,3 +1,6 @@
+
+% Reproduction number and basic reproduction number under the condition where beta_id is equal to beta_ic
+
 clear all
 close all
 clc
