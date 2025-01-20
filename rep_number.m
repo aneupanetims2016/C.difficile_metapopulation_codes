@@ -1,3 +1,5 @@
+
+% Reproduction number and basic reproduction where beta_id is 30 times greater than beta_ic
 clear all
 close all
 clc
