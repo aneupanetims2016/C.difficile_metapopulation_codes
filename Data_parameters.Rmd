@@ -1,0 +1,146 @@
+---
+title: "Data_work"
+author: "Archana Neupane Timsina"
+date: "2024-10-31"
+output: html_document
+---
+
+```{r }
+rm(list=ls())
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library("data.table")
+```
+
+
+
+```{r}
+setwd("C:/Users/aneupan/Documents/Rfiles")
+cdi<- read.csv ("cdi.csv", header=TRUE)
+#attach(cdi)
+
+#head(cdi)  ## print out the beginning of the data frame
+
+#str(cdi)  ## shows the structure of the R variables
+
+```
+
+
+```{r}
+#for delta_3 and d_3. Hospital
+patient_2017_to_2019 = subset(cdi, Year < 2020)
+
+LOS_for_all=subset(patient_2017_to_2019, LOS>0)
+weigted_mean = weighted.mean(LOS_for_all$LOS) # delta_3+d_3 = 1/weighted_mean
+
+Expaired_patient = subset(patient_2017_to_2019, expiration_date3_r>0)
+Discharge_patient= subset(patient_2017_to_2019, expiration_date3_r<0)
+delta3 = 178016/212958   #delta_3/d_3 = 0.84/0.16
+d3 = 34942/212958
+
+```
+
+```{r}
+# For delta_2 and d_2
+
+setwd("C:/Users/aneupan/Desktop/Cdiff Project/Data")
+nhdata<- read.csv ("Nursing_Home_Data.csv", header=TRUE)
+nhdata$Dates <- as.Date(nhdata$Week.Ending)
+transform(nhdata, date = format(Dates, "%d"), 
+               month = format(Dates, "%m"), year = format(Dates, "%Y"))
+nhdata$Year <- format(nhdata$Dates, "%Y")
+#print(nhdata$Year)
+#nhdata_filtered<-filter(nhdata, Year=="2020")
+
+nh_data2<- read.csv("facility_2017.csv", header =TRUE)
+nh_data3<- read.csv("facility_2018.csv", header =TRUE)
+nh_data4<- read.csv("facility_2019.csv", header =TRUE)
+```
+
+
+```{r}
+
+
+filtered_nhdata_weeklydeath<-filter(nhdata, Residents.Weekly.All.Deaths!="")
+ave_death = mean(filtered_nhdata_weeklydeath$Residents.Weekly.All.Deaths)
+
+filtered_nhdata_totalbed_occupied<-filter(nhdata, Total.Number.of.Occupied.Beds!="")
+ave_bed_occupied = mean(filtered_nhdata_totalbed_occupied$Total.Number.of.Occupied.Beds)
+death_per_bed_weekly = ave_death/ave_bed_occupied
+death_per_bed_per_day = death_per_bed_weekly/7
+
+```
+
+```{r}
+nh_data_2<-subset(nh_data2,state=="MO")
+nh_data_3<-subset(nh_data3,state=="MO")
+nh_data_4<-subset(nh_data4,state=="MO")
+
+h= nh_data_2$obs_medianlos
+h<-as.numeric( h)
+h[is.na(h)]<-0
+ave_los_nh = weighted.mean(h)
+summary(h)
+
+h1= nh_data_3$obs_medianlos
+h1<-as.numeric( h1)
+h1[is.na(h1)]<-0
+ave_los_nh1 = weighted.mean(h1)
+summary(h1)
+
+h2= nh_data_4$obs_medianlos
+h2<-as.numeric( h2)
+h2[is.na(h2)]<-0
+ave_los_nh2 = weighted.mean(h2)
+summary(h2)
+mean_los_nh= (ave_los_nh + ave_los_nh1 + ave_los_nh2)/3 #LOS of nursing home
+
+city_2018=subset(nh_data3,state=="MO")
+city_st_louis_2018=subset(city_2018, PROV3225=="SAINT LOUIS")
+nh_ad_2018 = as.numeric(sum(city_st_louis_2018$nresid))
+pp= city_st_louis_2018$agg_hosp
+pp1 =as.numeric(pp)
+pp1[is.na(pp1)]<-0
+mean_hP=mean(pp1)
+
+patient_2018 = subset(cdi, Year == 2018)
+patient_2018_ad=subset(patient_2018, hospital<2)
+
+```
+```{r}
+#for alpha
+yes_antibiotic= subset(cdi,cdi$daystot_anyabxclass>=1)
+
+LOS_day_y_anti = subset(yes_antibiotic, LOS>0)
+summary(LOS_day_y_anti$LOS)
+mean_LOS_yes_antibiotic=mean(LOS_day_y_anti$LOS)
+mean_LOS_yes_antibiotic
+k3_yes_antibiotic=1/mean(LOS_day_y_anti$LOS)
+k3_yes_antibiotic
+
+sd_k3=sd(LOS_day_y_anti$LOS)
+sd_k3
+
+
+```
+
+```{r}
+Tot_Los= filter(cdi, LOS>=1)
+Tot_post_anti=filter(Tot_Los, daystot_anyabxclass!="NA" )
+Tot_post_anti_subset <- subset(Tot_post_anti, select = c(LOS, daystot_anyabxclass))
+Tot_post_anti_subset$Pre_anti<-Tot_post_anti_subset$LOS- Tot_post_anti_subset$daystot_anyabxclass
+Tot_post_anti_subset$Pre_anti[Tot_post_anti_subset$Pre_anti< 0] <- 0
+mean_Los<- mean(Tot_post_anti_subset$LOS)
+mean_anti<- mean(Tot_post_anti_subset$daystot_anyabxclass)
+mean_pre_anti1<-mean_Los-mean_anti
+mean_pre_anti<-mean(Tot_post_anti_subset$Pre_anti)
+rate_alpha<-1/mean_pre_anti
+
+```
+
+
+
